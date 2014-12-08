@@ -7,12 +7,12 @@
 (defn next-message [conn]
   (b/to-string @(stream/take! @conn)))
 
-(defn create-new-user! []
+(defn create-new-user! [user-name]
   (let [conn (tcp/client {:host "10.112.156.136"
                           :port 8080})]
 
     (next-message conn) ;; new user
-    (stream/put! @conn "TurkeyHeads!\n")
+    (stream/put! @conn (str user-name "\n"))
     conn))
 
 (defn ->pos [direction]
@@ -43,7 +43,9 @@
        last-direction))
 
 (defn next-move [valid-moves last-direction]
-  (turn-left last-direction))
+  (let [new-direction (turn-left last-direction)]
+    (or (valid-moves new-direction)
+        (recur valid-moves new-direction))))
 
 (defn valid-moves [msg]
   (->> msg
@@ -55,7 +57,7 @@
        set))
 
 (defn run-present-hunt! []
-  (let [conn (create-new-user!)]
+  (let [conn (create-new-user! "TurkeyHeads")]
     
     (loop [msg (next-message conn)
            last-direction :east]
